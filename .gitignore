@@ -1,0 +1,8 @@
+__pycache__/
+.pytest_cache/
+Todels.egg-info/
+.vscode/
+build/
+dist/
+env/
+*temp*
