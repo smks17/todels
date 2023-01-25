@@ -1,7 +1,7 @@
 from __future__ import annotations
-import functools
 
 from typing import Iterable, Optional, Union
+import functools
 
 import torch
 import torch.nn as nn
@@ -27,9 +27,9 @@ class _Resnet(nn.Module):
             layers: Iterable
                 the number of each blocks (layers) (and should has len=4)
             out_channels: Iterable = [64,128,256,512]
-                the out channels of each blocks (layers) and if the model is Bottleneck Resnet then the third conv of each blocks will be multiply by four
+                the out channels of each block (layers) and if the model is Bottleneck Resnet then the third conv of each block will be multiplied by four
             is_bottleneck: Optional[bool] = None
-                use bottleneck block or simple block anf if this parameter is None then specified from number of layers
+                use bottleneck block or simple block and if this parameter is None then specified from the number of layers
             device: Optional[Union[torch.device, str]] = None)
                 target device which you would run on
         """
