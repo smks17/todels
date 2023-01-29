@@ -137,7 +137,7 @@ class _Resnet(nn.Module):
         self.block5 = nn.Sequential(*block5)
         
         # fc (last block)
-        self.fc = _create_fc(num_classes)
+        self.fc = _create_fc(num_classes, device=device)
     
     def forward(self, x):
         out = self.block1(x)

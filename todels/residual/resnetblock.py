@@ -73,7 +73,6 @@ class SimpleResnetBlock(nn.Module):
             self.short_way = ResnetShortcut(out_channels_convs[-1],
                                             downsample=downsample,
                                             stride=2,
-                                            padding=0,
                                             device=device)
         
         # last activation
@@ -160,8 +159,7 @@ class BottleneckBlock(nn.Module):
         if self.has_identity:
             self.short_way = ResnetShortcut(out_channels_convs[-1],
                                             downsample=downsample,
-                                            stride=2,
-                                            padding=0,
+                                            stride=stride,
                                             device=device)
 
         # last activation

@@ -54,7 +54,6 @@ class ResnextBlockA(nn.Module):
         self.short_way = ResnetShortcut(out_channels_convs*4,
                                         downsample=downsample,
                                         stride=stride,
-                                        padding=1,
                                         activation=None,
                                         device=device)
 
@@ -116,7 +115,6 @@ class ResnextBlockB(nn.Module):
         self.short_way = ResnetShortcut(out_channels_convs*4,
                                         downsample=downsample,
                                         stride=stride,
-                                        padding=1,
                                         activation=None,
                                         device=device)
 
