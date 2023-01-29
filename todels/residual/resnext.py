@@ -1,3 +1,5 @@
+"""Reference article: https://arxiv.org/abs/1611.05431v2"""
+
 from __future__ import annotations
 
 import functools
@@ -6,85 +8,13 @@ from typing import Iterable, Optional, Union
 import torch
 import torch.nn as nn
 
-from todels.residual import ResnetShortcut
-from todels.residual.resnet import SimpleResnetBlock, BottleneckBlock
-from todels import _create_conv_layer
-
-
-class SimpleResnextBlock(nn.Module):
-    def __init__(self, n_groups, out_channels_convs, stride=1, downsample=False, activation="ReLU", device=None):
-        super(self.__class__, self).__init__()
-        self.blocks = []
-        for i in range(n_groups):
-            self.blocks.append(
-                SimpleResnetBlock(out_channels_convs = out_channels_convs,
-                                  stride = stride,
-                                  has_identity = False,
-                                  downsample = False,
-                                  activation = None,
-                                  device = device)
-            )
-        
-        self.blocks = nn.ModuleList(self.blocks)
-        self.bn_group = nn.BatchNorm2d(out_channels_convs, device=device)
-        self.short_way = ResnetShortcut(out_channels_convs,
-                                        downsample=downsample,
-                                        stride=2,
-                                        padding=0,
-                                        activation=None,
-                                        device=device)
-
-        if activation is not None:
-            if activation.capitalize() == "Relu":
-                self.activation = nn.ReLU(True)
-            else:
-                raise NotImplementedError(f"{activation} is not implemented yet!")
-        else:
-            self.activation = nn.Identity()
-
-    def forward(self, x):
-        out = [block(x) for block in self.blocks]
-        out = sum(out)
-        out = self.short_way(x) + self.bn_group(out)
-        return self.activation(out)
-
-
-class ResnextBottleneckBlock(nn.Module):
-    def __init__(self, n_groups, out_channels_convs, stride=1, downsample=False, activation="ReLU", device=None):
-        super(self.__class__, self).__init__()
-        self.blocks = []
-        for i in range(n_groups):
-            self.blocks.append(
-                BottleneckBlock(out_channels_convs = out_channels_convs,
-                                stride = 2,
-                                has_identity = False,
-                                downsample = downsample,
-                                activation = None,
-                                device = device)
-            )
-        
-        self.blocks = nn.ModuleList(self.blocks)
-        self.bn_group = nn.BatchNorm2d(out_channels_convs*4, device=device)
-        self.short_way = ResnetShortcut(out_channels_convs*4,
-                                        downsample=True,
-                                        stride=2,
-                                        padding=0,
-                                        activation=None,
-                                        device=device)
-
-        if activation is not None:
-            if activation.capitalize() == "Relu":
-                self.activation = nn.ReLU(True)
-            else:
-                raise NotImplementedError(f"{activation} is not implemented yet!")
-        else:
-            self.activation = nn.Identity()
-
-    def forward(self, x):
-        out = [block(x) for block in self.blocks]
-        out = sum(out)
-        out = self.short_way(x) + self.bn_group(out)
-        return self.activation(out)
+from todels import _create_conv_layer, _create_fc
+from todels.residual import (
+    LAYERS_RESIDUAL50,
+    LAYERS_RESIDUAL101,
+    LAYERS_RESIDUAL152
+)
+from todels.residual.resnextblock import ResnextBlockA
 
 
 class _Resnext(nn.Module):
@@ -93,7 +23,7 @@ class _Resnext(nn.Module):
                  layers: Iterable,
                  C: int = 32,
                  out_channels: Iterable = [64,128,256,512],
-                 is_bottleneck: Optional[bool] = None,
+                 ResnextBlock: object = ResnextBlockA,
                  device: Optional[Union[torch.device, str]] = None):
         """
         Base Resnet class implementation
@@ -105,11 +35,11 @@ class _Resnext(nn.Module):
             layers: Iterable
                 the number of each blocks (layers) (and should has len=4)
             C: int = 32
-                the number of prallel residual unit for each layer
+                the number of parallel residual unit for each layer
             out_channels: Iterable = [64,128,256,512]
                 the out channels of each block (layers) and if the model is Bottleneck Resnet then the third conv of each block will be multiplied by four
-            is_bottleneck: Optional[bool] = None
-                use bottleneck block or simple block and if this parameter is None then specified from the number of layers
+            ResnextBlock: object
+                type of ResnexBlocks as a class (type A and B)
             device: Optional[Union[torch.device, str]] = None)
                 target device which you would run on
         """
@@ -127,21 +57,6 @@ class _Resnext(nn.Module):
                                         device=device)
         self.block1.add_module("MaxPool2d", nn.MaxPool2d(3, stride=2, padding=1))
 
-        
-        if is_bottleneck is None:
-            if sum(layers) <= 32:
-                ResnextBlock = SimpleResnextBlock
-            else:
-                ResnextBlock = ResnextBottleneckBlock
-                out_channels.append(out_channels[-1]*4)
-        else:
-            if is_bottleneck:
-                ResnextBlock = ResnextBottleneckBlock
-                out_channels.append(out_channels[-1]*4)
-            else:
-                ResnextBlock = SimpleResnextBlock
-
-
         # block 2
         block2 = []
         for i in range(layers[0]):
@@ -152,12 +67,12 @@ class _Resnext(nn.Module):
                 stride=1
                 downsample = False
 
-            block2.append(ResnextBlock(n_groups=C,
-                                       out_channels_convs = out_channels[0],
-                                       stride = stride,
+            block2.append(ResnextBlock(out_channels_convs=out_channels[0],
+                                       stride=stride,
+                                       C=C,
                                        downsample=downsample,
-                                       device = device,
-                                       activation = "ReLU"))
+                                       device=device,
+                                       activation="ReLU"))
         self.block2 = nn.Sequential(*block2)
 
         
@@ -170,12 +85,14 @@ class _Resnext(nn.Module):
             else:
                 downsample = False
                 stride=1
-            block3.append(ResnextBlock(n_groups=C,
-                                       out_channels_convs = out_channels[1],
+
+
+            block3.append(ResnextBlock(out_channels_convs=out_channels[1],
                                        stride=stride,
+                                       C=C,
                                        downsample=downsample,
-                                       device = device,
-                                       activation = "ReLU"))
+                                       device=device,
+                                       activation="ReLU"))
         self.block3 = nn.Sequential(*block3)
 
         # block 4
@@ -188,12 +105,13 @@ class _Resnext(nn.Module):
                 stride=1
                 downsample = False
                 
-            block4.append(ResnextBlock(n_groups=C,
-                                       out_channels_convs = out_channels[2],
+
+            block4.append(ResnextBlock(out_channels_convs=out_channels[2],
                                        stride=stride,
+                                       C=C,
                                        downsample=downsample,
-                                       device = device,
-                                       activation = "ReLU"))
+                                       device=device,
+                                       activation="ReLU"))
         self.block4 = nn.Sequential(*block4)
         
         # block 5
@@ -206,22 +124,16 @@ class _Resnext(nn.Module):
                 stride=1,
                 downsample = False
                 
-                
-            block4.append(ResnextBlock(n_groups=C,
-                                       out_channels_convs = out_channels[3],
+            block5.append(ResnextBlock(out_channels_convs=out_channels[3],
                                        stride=stride,
+                                       C=C,
                                        downsample=downsample,
-                                       device = device,
-                                       activation = "ReLU"))
+                                       device=device,
+                                       activation="ReLU"))
         self.block5 = nn.Sequential(*block5)
         
         # fc (last block)
-        self.fc = nn.Sequential(
-            nn.AdaptiveAvgPool2d((1, 1)),
-            nn.Flatten(),
-            nn.LazyLinear(num_classes, device=device),
-            nn.LogSoftmax(dim=1)
-        )
+        self.fc = _create_fc(num_classes)
     
     def forward(self, x):
         out = self.block1(x)
@@ -231,8 +143,8 @@ class _Resnext(nn.Module):
         out = self.block5(out)
         return self.fc(out)
 
-Resnext18 = functools.partial(_Resnext, layers=[2,2,2,2])
-Resnext34 = functools.partial(_Resnext, layers=[3,4,6,3])
-Resnext50 = functools.partial(_Resnext, layers=[3,4,6,3], is_bottleneck=True)
-Resnext101 = functools.partial(_Resnext, layers=[3,4,23,3])
-Resnext152 = functools.partial(_Resnext, layers=[3,8,36,3])
+Resnext50 = functools.partial(_Resnext, layers=LAYERS_RESIDUAL50)
+Resnext101 = functools.partial(_Resnext, layers=LAYERS_RESIDUAL101)
+Resnext152 = functools.partial(_Resnext, layers=LAYERS_RESIDUAL152)
+
+# TODO: test module with real dataset

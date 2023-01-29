@@ -6,7 +6,14 @@ import functools
 import torch
 import torch.nn as nn
 
-from todels import _create_conv_layer
+from todels import _create_conv_layer, _create_fc
+from todels.residual import (
+    LAYERS_RESIDUAL18,
+    LAYERS_RESIDUAL34,
+    LAYERS_RESIDUAL50,
+    LAYERS_RESIDUAL101,
+    LAYERS_RESIDUAL152
+)
 from todels.residual.resnetblock import SimpleResnetBlock, BottleneckBlock
 
 class _Resnet(nn.Module):
@@ -130,12 +137,7 @@ class _Resnet(nn.Module):
         self.block5 = nn.Sequential(*block5)
         
         # fc (last block)
-        self.fc = nn.Sequential(
-            nn.AdaptiveAvgPool2d((1, 1)),
-            nn.Flatten(),
-            nn.Linear(out_channels[-1], num_classes, device=device),
-            nn.LogSoftmax(dim=1)
-        )
+        self.fc = _create_fc(num_classes)
     
     def forward(self, x):
         out = self.block1(x)
@@ -146,8 +148,10 @@ class _Resnet(nn.Module):
         return self.fc(out)
 
 
-Resnet18 = functools.partial(_Resnet, layers=[2,2,2,2])
-Resnet34 = functools.partial(_Resnet, layers=[3,4,6,3])
-Resnet50 = functools.partial(_Resnet, layers=[3,4,6,3], is_bottleneck=True)
-Resnet101 = functools.partial(_Resnet, layers=[3,4,23,3])
-Resnet152 = functools.partial(_Resnet, layers=[3,8,36,3])
+Resnet18 = functools.partial(_Resnet, layers=LAYERS_RESIDUAL18)
+Resnet34 = functools.partial(_Resnet, layers=LAYERS_RESIDUAL34)
+Resnet50 = functools.partial(_Resnet, layers=LAYERS_RESIDUAL50, is_bottleneck=True)
+Resnet101 = functools.partial(_Resnet, layers=LAYERS_RESIDUAL101)
+Resnet152 = functools.partial(_Resnet, layers=LAYERS_RESIDUAL152)
+
+# TODO: test module with real dataset

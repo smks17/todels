@@ -29,7 +29,11 @@ class SimpleResnetBlock(nn.Module):
                  device: Optional[Union[torch.device, str]] = None
     ):
         """
-        A residual unit for resnet network with layers <= 34 
+        A residual unit for resnet network with layers <= 34
+
+        the main pipes which sum with shortcut
+
+        -> conv3x3 -> bn -> activation -> conv3x3 -> bn
 
         Parameters:
         ----------
@@ -93,14 +97,19 @@ class SimpleResnetBlock(nn.Module):
 class BottleneckBlock(nn.Module):
     def __init__(self,
                  out_channels_convs: Iterable,
-                 stride = 1,
+                 stride: Union[int, Iterable] = 1,
+                 groups: int = 1,
                  has_identity: bool = True,
                  downsample: bool = False,
-                 device = None,
+                 device: Optional[Union[torch.device, str]] = None,
                  activation: Optional[str] = "ReLU",
     ):  
         """
         A residual unit for resnet network with layers > 34
+
+        the main pipe which sums with shortcut
+
+        -> conv1x1 -> bn -> activation -> conv3x3 -> bn -> activation -> conv1x1 -> bn
 
         Parameters:
         ----------
@@ -112,6 +121,8 @@ class BottleneckBlock(nn.Module):
                 if it is True then sum with input at the end otherwise this block will be just a normal block
             downsample: bool = False
                 if it is True then input sum with output of block
+            groups: int = 1
+                pass as parameter to first and second conv (uses for ResnextB)
             activation: str = "ReLU"
                 if it isn't None then do activation after summation of output with input
             device: Optional[Union[torch.device, str]] = None
@@ -122,26 +133,28 @@ class BottleneckBlock(nn.Module):
         if not isinstance(out_channels_convs, Iterable) and isinstance(out_channels_convs, int):
             out_channels_convs = [out_channels_convs, out_channels_convs, out_channels_convs*4]
         self.layer1 = _create_conv_layer(out_channels_convs[0],
-                                        kernel_size=1,
-                                        stride=1,
-                                        padding=0,
-                                        has_bn=True,
-                                        activation="ReLU",
-                                        device=device)
+                                         kernel_size=1,
+                                         stride=1,
+                                         padding=0,
+                                         groups=groups,
+                                         has_bn=True,
+                                         activation="ReLU",
+                                         device=device)
         self.layer2 = _create_conv_layer(out_channels_convs[1],
-                                        kernel_size=3,
-                                        stride=stride,
-                                        padding=1,
-                                        has_bn=True,
-                                        activation="ReLU",
-                                        device=device)
+                                         kernel_size=3,
+                                         stride=stride,
+                                         padding=1,
+                                         groups=groups,
+                                         has_bn=True,
+                                         activation="ReLU",
+                                         device=device)
         self.layer3 = _create_conv_layer(out_channels_convs[2],
-                                        kernel_size=1,
-                                        stride=1,
-                                        padding=0,
-                                        has_bn=True,
-                                        activation=None,
-                                        device=device)
+                                         kernel_size=1,
+                                         stride=1,
+                                         padding=0,
+                                         has_bn=True,
+                                         activation=None,
+                                         device=device)
         # shortcut
         self.has_identity = has_identity
         if self.has_identity:

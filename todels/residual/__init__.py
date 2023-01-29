@@ -12,8 +12,8 @@ class ResnetShortcut(nn.Module):
     def __init__(self,
                  out_channel: int,
                  downsample: bool,
-                 stride: Union[int, Iterable],
-                 padding: Union[int, Iterable],
+                 stride: Union[int, Iterable] = 2,
+                 padding: Union[int, Iterable] = 1,
                  activation: Optional[str] = None,
                  device: Optional[Union[torch.device, str]] = None):
         super(self.__class__, self).__init__()
@@ -22,10 +22,16 @@ class ResnetShortcut(nn.Module):
         else:
             self.short_way = _create_conv_layer(out_channel,
                                                kernel_size=3,
-                                               stride=2,
-                                               padding=1,
+                                               stride=stride,
+                                               padding=padding,
                                                has_bn=True,
                                                activation=activation,
                                                device=device)
     def forward(self, x):
         return self.short_way(x)
+
+LAYERS_RESIDUAL18 = [2,2,2,2]
+LAYERS_RESIDUAL34 = [3,4,6,3]
+LAYERS_RESIDUAL50 = [3,4,6,3]
+LAYERS_RESIDUAL101 = [3,4,23,3]
+LAYERS_RESIDUAL152 = [3,8,36,3]

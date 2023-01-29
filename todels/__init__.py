@@ -5,12 +5,13 @@ import torch.nn as nn
 
 
 def _create_conv_layer(out_channel: int,
-                      kernel_size: Union[int, Iterable],
-                      stride: Union[int, Iterable] = 1,
-                      padding: Union[int, Iterable] = 0,
-                      has_bn: bool = True,
-                      activation: Optional[str] = "ReLU",
-                      device: Optional[Union[torch.device, str]] = None
+                       kernel_size: Union[int, Iterable],
+                       stride: Union[int, Iterable] = 1,
+                       padding: Union[int, Iterable] = 0,
+                       groups: int = 1,
+                       has_bn: bool = True,
+                       activation: Optional[str] = "ReLU",
+                       device: Optional[Union[torch.device, str]] = None
 ):
     """
     a function to create a conv2d->bn->activation block
@@ -25,6 +26,8 @@ def _create_conv_layer(out_channel: int,
             stride of conv
         padding: Optional[int, Iterable] = 0
             size of padding fo conv
+        groups: int = 1
+            controls the connection input and output
         has_bn: bool = True,
             has batch normalize or not
         activation: Optional[str] = "ReLU"
@@ -35,26 +38,22 @@ def _create_conv_layer(out_channel: int,
     """
     # TODO: implement for 3d too
     layer = nn.Sequential()
+    bias = True
     if has_bn:
-        layer.add_module(
-            "Conv2d",
-            nn.LazyConv2d(out_channels=out_channel,
-                          kernel_size=kernel_size,
-                          stride=stride,
-                          padding=padding,
-                          bias=False,
-                          device=device)
-        )
+        bias = False
+    layer.add_module(
+        "Conv2d",
+        nn.LazyConv2d(out_channels=out_channel,
+                      kernel_size=kernel_size,
+                      stride=stride,
+                      padding=padding,
+                      groups=groups,
+                      bias=bias,
+                      device=device)
+    )
+    if has_bn:
         layer.add_module("BatchNorm2d", nn.BatchNorm2d(out_channel, device=device))
-    else:
-        layer.add_module(
-            "Conv2d",
-            nn.LazyConv2d(out_channel=out_channel,
-                          kernel_size=kernel_size,
-                          stride=stride,
-                          padding=padding,
-                          device=device)
-        )    
+
     # TODO: better handle
     if activation is not None:
         if activation.capitalize() == "Relu":
@@ -63,3 +62,12 @@ def _create_conv_layer(out_channel: int,
             raise NotImplementedError(f"{activation} is not implemented yet!")
 
     return layer
+
+def _create_fc(num_classes: int, device: Optional[Union[torch.device, str]] = None):
+    fc = nn.Sequential(
+        nn.AdaptiveAvgPool2d((1, 1)),
+        nn.Flatten(),
+        nn.LazyLinear(num_classes, device=device),
+        nn.LogSoftmax(dim=1)
+    )
+    return fc
