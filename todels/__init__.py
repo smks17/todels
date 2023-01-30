@@ -63,11 +63,19 @@ def _create_conv_layer(out_channel: int,
 
     return layer
 
-def _create_fc(num_classes: int, device: Optional[Union[torch.device, str]] = None):
+def _create_fc(num_classes: int,
+               final_activation: str = "Softmax",
+               device: Optional[Union[torch.device, str]] = None):
+    if final_activation.capitalize() == "Softmax":
+        activation = nn.Softmax
+    elif final_activation.capitalize() == "Logsoftmax":
+        activation = nn.LogSoftmax
+    else:
+        raise NotImplementedError(f"{activation} is not implemented yet!")
     fc = nn.Sequential(
         nn.AdaptiveAvgPool2d((1, 1)),
         nn.Flatten(),
         nn.LazyLinear(num_classes, device=device),
-        nn.LogSoftmax(dim=1)
+        activation(dim=1)
     )
     return fc
