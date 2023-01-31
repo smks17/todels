@@ -51,8 +51,13 @@ class ResnextBlockA(nn.Module):
                                                device = device))
         self.blocks = nn.ModuleList(self.blocks)
         self.bn_group = nn.BatchNorm2d(out_channels_convs*4, device=device)
+        # TODO: check via stride and output channels
+        if downsample:
+            stride = 2
+        else:
+            stride = 1
         self.short_way = ResnetShortcut(out_channels_convs*4,
-                                        downsample=downsample,
+                                        downsample=True,
                                         stride=stride,
                                         activation=None,
                                         device=device)
@@ -112,8 +117,13 @@ class ResnextBlockB(nn.Module):
                                                activation = None,
                                                device = device)
         self.bn_group = nn.BatchNorm2d(out_channels_convs*4, device=device)
+        # TODO: check via stride and output channels
+        if downsample:
+            stride = 2
+        else:
+            stride = 1
         self.short_way = ResnetShortcut(out_channels_convs*4,
-                                        downsample=downsample,
+                                        downsample=True,
                                         stride=stride,
                                         activation=None,
                                         device=device)

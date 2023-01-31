@@ -157,8 +157,13 @@ class BottleneckBlock(nn.Module):
         # shortcut
         self.has_identity = has_identity
         if self.has_identity:
+            # TODO: check via stride and output channels
+            if downsample:
+                stride = 2
+            else:
+                stride = 1
             self.short_way = ResnetShortcut(out_channels_convs[-1],
-                                            downsample=downsample,
+                                            downsample=True,
                                             stride=stride,
                                             device=device)
 
