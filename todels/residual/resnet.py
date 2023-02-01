@@ -67,37 +67,28 @@ class _Resnet(nn.Module):
 
         # block 2
         block2 = []
+        stride = 1 #  doing that from resnet paper
         for i in range(layers[0]):
-            if i == 0:
-                stride=2
-                downsample = True
-            else:
-                stride=1
-                downsample = False
-
-            block2.append(ResnetBlock(out_channels_convs = out_channels[0],
+            block2.append(ResnetBlock(out_channels_convs=out_channels[0],
                                       stride=stride,
-                                      has_identity = True,
-                                      downsample = downsample,
-                                      device = device,
-                                      activation = "ReLU"))
+                                      has_identity=True,
+                                      first_block=True,
+                                      device=device,
+                                      activation="ReLU"))
         self.block2 = nn.Sequential(*block2)
 
         # block 3
         block3 = []
         for i in range(layers[1]):
             if i == 0:
-                downsample = True
                 stride=2
             else:
-                downsample = False
                 stride=1
-            block3.append(ResnetBlock(out_channels_convs = out_channels[1],
+            block3.append(ResnetBlock(out_channels_convs=out_channels[1],
                                       stride=stride,
-                                      has_identity = True,
-                                      downsample = downsample,
-                                      device = device,
-                                      activation = "ReLU"))
+                                      has_identity=True,
+                                      device=device,
+                                      activation="ReLU"))
         self.block3 = nn.Sequential(*block3)
         
         # block 4
@@ -105,17 +96,13 @@ class _Resnet(nn.Module):
         for i in range(layers[2]):
             if i == 0:
                 stride=2
-                downsample = True
             else:
                 stride=1
-                downsample = False
-                
-            block4.append(ResnetBlock(out_channels_convs = out_channels[2],
+            block4.append(ResnetBlock(out_channels_convs=out_channels[2],
                                       stride=stride,
-                                      has_identity = True,
-                                      downsample = downsample,
-                                      device = device,
-                                      activation = "ReLU"))
+                                      has_identity=True,
+                                      device=device,
+                                      activation="ReLU"))
         self.block4 = nn.Sequential(*block4)
         
         # block 5
@@ -123,17 +110,13 @@ class _Resnet(nn.Module):
         for i in range(layers[3]):
             if i == 0:
                 stride=2,
-                downsample = True
             else:
                 stride=1,
-                downsample = False
-                
             block5.append(ResnetBlock(out_channels_convs = out_channels[3],
                                       stride=stride,
-                                      has_identity = True,
-                                      downsample = downsample,
-                                      device = device,
-                                      activation = "ReLU"))
+                                      has_identity=True,
+                                      device=device,
+                                      activation="ReLU"))
         self.block5 = nn.Sequential(*block5)
         
         # fc (last block)

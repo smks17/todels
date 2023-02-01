@@ -24,7 +24,6 @@ class SimpleResnetBlock(nn.Module):
                  out_channels_convs: Iterable,
                  stride: Union[int, Iterable] = 1,
                  has_identity: bool = True,
-                 downsample: bool = False,
                  activation: Optional[str] = None,
                  device: Optional[Union[torch.device, str]] = None
     ):
@@ -40,11 +39,9 @@ class SimpleResnetBlock(nn.Module):
             out_channels_convs: Union[Iterable, int]
                 the number of block output channels
             stride: Union[int, Iterable] = 1
-                 the stride value(s) for first conv
+                 the stride value(s) for first conv and the short way
             has_identity: bool = True
                 if it is True then sum with input at the end otherwise this block will be just a normal block
-            downsample: bool = False
-                if it is True then input sum with output of block
             activation: str = "ReLU"
                 if it isn't None than do activation after sum output with input
             device: Optional[Union[torch.device, str]] = None
@@ -70,9 +67,9 @@ class SimpleResnetBlock(nn.Module):
         # shortcut
         self.has_identity = has_identity
         if self.has_identity:
+            # will be checked downsample via stride
             self.short_way = ResnetShortcut(out_channels_convs[-1],
-                                            downsample=downsample,
-                                            stride=2,
+                                            stride=stride,
                                             device=device)
         
         # last activation
@@ -98,8 +95,8 @@ class BottleneckBlock(nn.Module):
                  out_channels_convs: Iterable,
                  stride: Union[int, Iterable] = 1,
                  groups: int = 1,
+                 first_block = False,  #TODO: delete this param and add in_channels for control
                  has_identity: bool = True,
-                 downsample: bool = False,
                  device: Optional[Union[torch.device, str]] = None,
                  activation: Optional[str] = "ReLU",
     ):  
@@ -115,11 +112,9 @@ class BottleneckBlock(nn.Module):
             out_channels_convs: Union[Iterable, int]
                 the number of block output channels
             stride: Union[int, Iterable] = 1
-                 the stride value(s) for middle conv (conv with kernel_size 3)
+                 the stride value(s) for middle conv (conv with kernel_size 3) and the short way
             has_identity: bool = True
                 if it is True then sum with input at the end otherwise this block will be just a normal block
-            downsample: bool = False
-                if it is True then input sum with output of block
             groups: int = 1
                 pass as parameter to first and second conv (uses for ResnextB)
             activation: str = "ReLU"
@@ -157,14 +152,13 @@ class BottleneckBlock(nn.Module):
         # shortcut
         self.has_identity = has_identity
         if self.has_identity:
-            # TODO: check via stride and output channels
-            if downsample:
-                stride = 2
-            else:
-                stride = 1
+            # will be checked downsample via stride
+            do_conv = False
+            if first_block:
+                do_conv = True
             self.short_way = ResnetShortcut(out_channels_convs[-1],
-                                            downsample=True,
                                             stride=stride,
+                                            do_conv=do_conv,
                                             device=device)
 
         # last activation

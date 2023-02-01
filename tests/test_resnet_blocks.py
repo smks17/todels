@@ -17,13 +17,13 @@ class BlockTypes(Enum):
 
 def create_blocks(block_type: BlockTypes):
     if block_type == BlockTypes.Downsample_SimpleResnetBlock:
-        return SimpleResnetBlock(out_channels_convs=[64,128], stride=(2,2), downsample=True)
+        return SimpleResnetBlock(out_channels_convs=[64,128], stride=(2,2))
     elif block_type == BlockTypes.NoDownsample_SimpleResnetBlock:
-        return SimpleResnetBlock(out_channels_convs=[64,64], stride=(1,1), downsample=False)
+        return SimpleResnetBlock(out_channels_convs=[64,64], stride=(1,1))
     elif block_type == BlockTypes.Downsample_Bottleneck:
-        return BottleneckBlock(out_channels_convs=64, stride=2, downsample=True)
+        return BottleneckBlock(out_channels_convs=64, stride=2)
     elif block_type == BlockTypes.NoDownsample_Bottleneck:
-        return BottleneckBlock(out_channels_convs=64, stride=1, downsample=False)
+        return BottleneckBlock(out_channels_convs=64, stride=1)
     else:
         raise NotImplementedError(f"Block type with id {block_type} is not implemented yet!")
     

@@ -11,12 +11,12 @@ from todels import _create_conv_layer
 class ResnetShortcut(nn.Module):
     def __init__(self,
                  out_channel: int,
-                 downsample: bool,
-                 stride: Union[int, Iterable] = 2,
+                 stride: Union[int, Iterable] = 2,  # also control downsample via stride
                  activation: Optional[str] = None,
+                 do_conv: bool = False,
                  device: Optional[Union[torch.device, str]] = None):
         super(self.__class__, self).__init__()
-        if not downsample:
+        if not do_conv and stride == 1:
             self.short_way = nn.Identity()
         else:
             self.short_way = _create_conv_layer(out_channel,

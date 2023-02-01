@@ -73,6 +73,7 @@ def _create_fc(num_classes: int,
     else:
         raise NotImplementedError(f"{activation} is not implemented yet!")
     fc = nn.Sequential(
+        #TODO: delete AvgPool from fc
         nn.AdaptiveAvgPool2d((1, 1)),
         nn.Flatten(),
         nn.LazyLinear(num_classes, device=device),

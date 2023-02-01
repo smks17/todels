@@ -18,13 +18,13 @@ class BlockTypes(Enum):
 
 def create_blocks(block_type: BlockTypes):
     if block_type == BlockTypes.Downsample_ResnextBlockA:
-        return ResnextBlockA(out_channels_convs=64, C=C, stride=2, downsample=True)
+        return ResnextBlockA(out_channels_convs=64, C=C, stride=2)
     elif block_type == BlockTypes.NoDownsample_ResnextBlockA:
-        return ResnextBlockA(out_channels_convs=64, C=C, stride=1, downsample=False)
+        return ResnextBlockA(out_channels_convs=64, C=C, stride=1)
     elif block_type == BlockTypes.Downsample_ResnextBlockB:
-        return ResnextBlockB(out_channels_convs=64, C=C, stride=2, downsample=True)
+        return ResnextBlockB(out_channels_convs=64, C=C, stride=2)
     elif block_type == BlockTypes.NoDownsample_ResnextBlockB:
-        return ResnextBlockB(out_channels_convs=64, C=C, stride=1, downsample=False)
+        return ResnextBlockB(out_channels_convs=64, C=C, stride=1)
     else:
         raise NotImplementedError(f"Block type with id {block_type} is not implemented yet!")
     

@@ -14,7 +14,6 @@ class ResnextBlockA(nn.Module):
                  out_channels_convs: int,
                  C: int,
                  stride: Union[int, Iterable] = 1,
-                 downsample: bool = False,
                  activation: Optional[str] = "ReLU",
                  device: Optional[Union[torch.device, str]] = None):
         """
@@ -27,9 +26,7 @@ class ResnextBlockA(nn.Module):
             out_channels_convs: Union[Iterable, int]
                 the number of block output channels
             stride: Union[int, Iterable] = 1
-                 the stride value(s) for middle conv (conv with kernel_size 3)
-            downsample: bool = False
-                if it is True then input sum with output of block
+                 the stride value(s) for middle conv (conv with kernel_size 3) and the short way
             C: int
                 Cardinality of block (number of parallel block)
             activation: str = "ReLU"
@@ -46,20 +43,15 @@ class ResnextBlockA(nn.Module):
             self.blocks.append(BottleneckBlock(out_channels_convs = [C*d, C*d, out_channels_convs*4],
                                                stride = stride,
                                                has_identity = False,
-                                               downsample = downsample,
                                                activation = None,
                                                device = device))
         self.blocks = nn.ModuleList(self.blocks)
         self.bn_group = nn.BatchNorm2d(out_channels_convs*4, device=device)
-        # TODO: check via stride and output channels
-        if downsample:
-            stride = 2
-        else:
-            stride = 1
+        # will be checked downsample via stride
         self.short_way = ResnetShortcut(out_channels_convs*4,
-                                        downsample=True,
                                         stride=stride,
                                         activation=None,
+                                        do_conv=True,
                                         device=device)
 
         if activation is not None:
@@ -82,7 +74,6 @@ class ResnextBlockB(nn.Module):
                  out_channels_convs: int,
                  C: int,
                  stride: Union[int, Iterable] = 1,
-                 downsample: bool = False,
                  activation: Optional[str] = "ReLU",
                  device: Optional[Union[torch.device, str]] = None):
         """
@@ -95,9 +86,7 @@ class ResnextBlockB(nn.Module):
             out_channels_convs: Union[Iterable, int]
                 the number of block output channels
             stride: Union[int, Iterable] = 1
-                 the stride value(s) for middle conv (conv with kernel_size 3)
-            downsample: bool = False
-                if it is True then input sum with output of block
+                 the stride value(s) for middle conv (conv with kernel_size 3) and the short way
             C: int
                 Cardinality of block (number of parallel block)
             activation: str = "ReLU"
@@ -113,19 +102,14 @@ class ResnextBlockB(nn.Module):
                                                stride = stride,
                                                groups = C,
                                                has_identity = False,
-                                               downsample = downsample,
                                                activation = None,
                                                device = device)
         self.bn_group = nn.BatchNorm2d(out_channels_convs*4, device=device)
-        # TODO: check via stride and output channels
-        if downsample:
-            stride = 2
-        else:
-            stride = 1
+        # will be checked downsample via stride
         self.short_way = ResnetShortcut(out_channels_convs*4,
-                                        downsample=True,
                                         stride=stride,
                                         activation=None,
+                                        do_conv=True,
                                         device=device)
 
         if activation is not None:

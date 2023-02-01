@@ -59,18 +59,11 @@ class _Resnext(nn.Module):
 
         # block 2
         block2 = []
+        stride = 1 #  doing that from resnext paper
         for i in range(layers[0]):
-            if i == 0:
-                stride=2
-                downsample = True
-            else:
-                stride=1
-                downsample = False
-
             block2.append(ResnextBlock(out_channels_convs=out_channels[0],
                                        stride=stride,
                                        C=C,
-                                       downsample=downsample,
                                        device=device,
                                        activation="ReLU"))
         self.block2 = nn.Sequential(*block2)
@@ -80,17 +73,12 @@ class _Resnext(nn.Module):
         block3 = []
         for i in range(layers[1]):
             if i == 0:
-                downsample = True
                 stride=2
             else:
-                downsample = False
                 stride=1
-
-
             block3.append(ResnextBlock(out_channels_convs=out_channels[1],
                                        stride=stride,
                                        C=C,
-                                       downsample=downsample,
                                        device=device,
                                        activation="ReLU"))
         self.block3 = nn.Sequential(*block3)
@@ -100,16 +88,11 @@ class _Resnext(nn.Module):
         for i in range(layers[2]):
             if i == 0:
                 stride=2
-                downsample = True
             else:
                 stride=1
-                downsample = False
-                
-
             block4.append(ResnextBlock(out_channels_convs=out_channels[2],
                                        stride=stride,
                                        C=C,
-                                       downsample=downsample,
                                        device=device,
                                        activation="ReLU"))
         self.block4 = nn.Sequential(*block4)
@@ -119,15 +102,11 @@ class _Resnext(nn.Module):
         for i in range(layers[3]):
             if i == 0:
                 stride=2,
-                downsample = True
             else:
                 stride=1,
-                downsample = False
-                
             block5.append(ResnextBlock(out_channels_convs=out_channels[3],
                                        stride=stride,
                                        C=C,
-                                       downsample=downsample,
                                        device=device,
                                        activation="ReLU"))
         self.block5 = nn.Sequential(*block5)
