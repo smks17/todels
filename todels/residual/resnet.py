@@ -138,3 +138,4 @@ Resnet101 = functools.partial(_Resnet, layers=LAYERS_RESIDUAL101)
 Resnet152 = functools.partial(_Resnet, layers=LAYERS_RESIDUAL152)
 
 # TODO: test module with real dataset
+# TODO: implement light resnet (more customize)
