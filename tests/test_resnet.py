@@ -2,10 +2,9 @@ from enum import Enum, auto
 
 from torchsummary import summary
 
-from . import model_tester
+from . import model_tester, MODEL_INPUT_SIZE
 from todels.residual.resnet import *
 
-MODULE_INPUT_SIZE = (64,int(128/2),int(128/2))
 NUM_CLASSES = 10
 
 
@@ -33,24 +32,24 @@ def create_modules(module_type: ModuleTypes):
 @model_tester
 def test_resnet18():
     model = create_modules(ModuleTypes.Resnet18)
-    summary(model, MODULE_INPUT_SIZE)
+    summary(model, MODEL_INPUT_SIZE)
 
 @model_tester
 def test_resnet34():
     model = create_modules(ModuleTypes.Resnet34)
-    summary(model, MODULE_INPUT_SIZE)
+    summary(model, MODEL_INPUT_SIZE)
 
 @model_tester
 def test_resnet50():
     model = create_modules(ModuleTypes.Resnet50)
-    summary(model, MODULE_INPUT_SIZE)
+    summary(model, MODEL_INPUT_SIZE)
 
 @model_tester
 def test_resnet101():
     model = create_modules(ModuleTypes.Resnet101)
-    summary(model, MODULE_INPUT_SIZE)
+    summary(model, MODEL_INPUT_SIZE)
 
 @model_tester
 def test_resnet152():
     model = create_modules(ModuleTypes.Resnet152)
-    summary(model, MODULE_INPUT_SIZE)
+    summary(model, MODEL_INPUT_SIZE)
