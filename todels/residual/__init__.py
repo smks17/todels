@@ -5,7 +5,7 @@ from typing import Iterable, Optional, Union
 import torch
 import torch.nn as nn
 
-from todels import _create_conv_layer
+from todels import ConvBlock
 
 
 class ResnetShortcut(nn.Module):
@@ -19,13 +19,13 @@ class ResnetShortcut(nn.Module):
         if not do_conv and stride == 1:
             self.short_way = nn.Identity()
         else:
-            self.short_way = _create_conv_layer(out_channel,
-                                               kernel_size=1,
-                                               stride=stride,
-                                               padding=0,
-                                               has_bn=True,
-                                               activation=activation,
-                                               device=device)
+            self.short_way = ConvBlock(out_channel,
+                                       kernel_size=1,
+                                       stride=stride,
+                                       padding=0,
+                                       type_norm="batch",
+                                       activation=activation,
+                                       device=device)
     def forward(self, x):
         return self.short_way(x)
 

@@ -23,7 +23,7 @@ def create_blocks(block_type: BlockTypes):
     elif block_type == BlockTypes.Downsample_Bottleneck:
         return BottleneckBlock(out_channels_convs=64, stride=2)
     elif block_type == BlockTypes.NoDownsample_Bottleneck:
-        return BottleneckBlock(out_channels_convs=64, stride=1)
+        return BottleneckBlock(out_channels_convs=64, stride=1, first_block=True)
     else:
         raise NotImplementedError(f"Block type with id {block_type} is not implemented yet!")
     

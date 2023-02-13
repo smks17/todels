@@ -17,13 +17,14 @@ import torch
 import torch.nn as nn
 
 from todels.residual import ResnetShortcut
-from todels import _create_conv_layer
+from todels import ConvBlock
 
 class SimpleResnetBlock(nn.Module):
     def __init__(self,
                  out_channels_convs: Iterable,
                  stride: Union[int, Iterable] = 1,
                  has_identity: bool = True,
+                 first_block: bool = True,
                  activation: Optional[str] = None,
                  device: Optional[Union[torch.device, str]] = None
     ):
@@ -50,20 +51,20 @@ class SimpleResnetBlock(nn.Module):
         super(self.__class__, self).__init__()
         if not isinstance(out_channels_convs, Iterable) and isinstance(out_channels_convs, int):
             out_channels_convs = [out_channels_convs, out_channels_convs]
-        self.layer1 = _create_conv_layer(out_channels_convs[0],
-                                        kernel_size=3,
-                                        stride=stride,
-                                        padding=1,
-                                        has_bn=True,
-                                        activation="ReLU",
-                                        device=device)
-        self.layer2 = _create_conv_layer(out_channels_convs[1],
-                                        kernel_size=3,
-                                        stride=1,
-                                        padding=1,
-                                        has_bn=True,
-                                        activation=None,
-                                        device=device)
+        self.layer1 = ConvBlock(out_channels_convs[0],
+                                kernel_size=3,
+                                stride=stride,
+                                padding=1,
+                                type_norm="batch",
+                                activation="ReLU",
+                                device=device)
+        self.layer2 = ConvBlock(out_channels_convs[1],
+                                kernel_size=3,
+                                stride=1,
+                                padding=1,
+                                type_norm="batch",
+                                activation=None,
+                                device=device)
         # shortcut
         self.has_identity = has_identity
         if self.has_identity:
@@ -126,29 +127,29 @@ class BottleneckBlock(nn.Module):
         
         if not isinstance(out_channels_convs, Iterable) and isinstance(out_channels_convs, int):
             out_channels_convs = [out_channels_convs, out_channels_convs, out_channels_convs*4]
-        self.layer1 = _create_conv_layer(out_channels_convs[0],
-                                         kernel_size=1,
-                                         stride=1,
-                                         padding=0,
-                                         groups=groups,
-                                         has_bn=True,
-                                         activation="ReLU",
-                                         device=device)
-        self.layer2 = _create_conv_layer(out_channels_convs[1],
-                                         kernel_size=3,
-                                         stride=stride,
-                                         padding=1,
-                                         groups=groups,
-                                         has_bn=True,
-                                         activation="ReLU",
-                                         device=device)
-        self.layer3 = _create_conv_layer(out_channels_convs[2],
-                                         kernel_size=1,
-                                         stride=1,
-                                         padding=0,
-                                         has_bn=True,
-                                         activation=None,
-                                         device=device)
+        self.layer1 = ConvBlock(out_channels_convs[0],
+                                kernel_size=1,
+                                stride=1,
+                                padding=0,
+                                groups=groups,
+                                type_norm="batch",
+                                activation="ReLU",
+                                device=device)
+        self.layer2 = ConvBlock(out_channels_convs[1],
+                                kernel_size=3,
+                                stride=stride,
+                                padding=1,
+                                groups=groups,
+                                type_norm="batch",
+                                activation="ReLU",
+                                device=device)
+        self.layer3 = ConvBlock(out_channels_convs[2],
+                                kernel_size=1,
+                                stride=1,
+                                padding=0,
+                                type_norm="batch",
+                                activation=None,
+                                device=device)
         # shortcut
         self.has_identity = has_identity
         if self.has_identity:

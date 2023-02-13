@@ -8,7 +8,7 @@ from typing import Iterable, Optional, Union
 import torch
 import torch.nn as nn
 
-from todels import _create_conv_layer, _create_fc
+from todels import ConvBlock, _create_fc
 from todels.residual import (
     LAYERS_RESIDUAL50,
     LAYERS_RESIDUAL101,
@@ -48,14 +48,14 @@ class _Resnext(nn.Module):
         super(self.__class__, self).__init__()
         
         # block 1
-        self.block1 = _create_conv_layer(out_channels[0],
-                                        kernel_size=7,
-                                        stride=2,
-                                        padding=3,
-                                        has_bn=True,
-                                        activation="ReLU",
-                                        device=device)
-        self.block1.add_module("MaxPool2d", nn.MaxPool2d(3, stride=2, padding=1))
+        self.conv1 = ConvBlock(out_channels[0],
+                                kernel_size=7,
+                                stride=2,
+                                padding=3,
+                                type_norm="batch",
+                                activation="ReLU",
+                                device=device)
+        self.maxpool = nn.MaxPool2d(3, stride=2, padding=1)
 
         # block 2
         block2 = []
@@ -110,16 +110,20 @@ class _Resnext(nn.Module):
                                        device=device,
                                        activation="ReLU"))
         self.block5 = nn.Sequential(*block5)
-        
+        self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
+        self.flatten = nn.Flatten()        
         # fc (last block)
         self.fc = _create_fc(num_classes, device=device)
     
     def forward(self, x):
-        out = self.block1(x)
+        out = self.conv1(x)
+        out = self.maxpool(out)
         out = self.block2(out)
         out = self.block3(out)
         out = self.block4(out)
         out = self.block5(out)
+        out = self.avgpool(out)
+        out = self.flatten(out)
         return self.fc(out)
 
 Resnext50 = functools.partial(_Resnext, layers=LAYERS_RESIDUAL50)
