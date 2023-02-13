@@ -22,6 +22,7 @@ class _Resnet(nn.Module):
                  layers: Iterable,
                  out_channels: Iterable = [64,128,256,512],
                  is_bottleneck: Optional[bool] = None,
+                 is_light = False,
                  device: Optional[Union[torch.device, str]] = None):
         super(self.__class__, self).__init__()
         """
@@ -43,15 +44,25 @@ class _Resnet(nn.Module):
         # TODO: implement more choice
         
         # block 1
-        self.conv1 = ConvBlock(out_channels[0],
-                                kernel_size=7,
-                                stride=2,
-                                padding=3,
-                                type_norm="batch",
-                                activation="ReLU",
-                                device=device)
-        self.maxpool = nn.MaxPool2d(3, stride=2, padding=1)
-
+        if not is_light:
+            self.conv1 = ConvBlock(out_channels[0],
+                                   kernel_size=7,
+                                   stride=2,
+                                   padding=3,
+                                   type_norm="batch",
+                                   activation="ReLU",
+                                   device=device)
+            self.maxpool = nn.MaxPool2d(3, stride=2, padding=1)
+        else:
+            self.conv1 = ConvBlock(out_channels[0],
+                                   kernel_size=3,
+                                   stride=1,
+                                   padding=1,
+                                   type_norm="batch",
+                                   activation="ReLU",
+                                   device=device)
+            self.maxpool = None
+            
         if is_bottleneck is None:
             if sum(layers) <= 32:
                 ResnetBlock = SimpleResnetBlock
@@ -125,7 +136,8 @@ class _Resnet(nn.Module):
     
     def forward(self, x):
         out = self.conv1(x)
-        out = self.maxpool(out)
+        if self.maxpool is not None:
+            out = self.maxpool(out)
         out = self.block2(out)
         out = self.block3(out)
         out = self.block4(out)
