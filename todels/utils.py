@@ -4,23 +4,25 @@ from time import time
 
 
 class ProgressBar:
-    def __init__(self, n_samples, max_epochs, lenght_bar):
-        self.reset()
+    def __init__(self, epochs, n_samples, length_bar):
         self.n_samples = n_samples
-        self.max_epochs = max_epochs
-        self.lenght_bar = lenght_bar
-        
+        self.epochs = epochs
+        self.length_bar = length_bar
+        self.reset()
+    
     def reset(self):
         self.percent = 0
         self.last_time = time()
         self.take_time = 0
+        self._print_result(0)
 
-    def _print_result(self, percent, addition_output, end=False):
+    def _print_result(self, percent, addition_output="", end=False):
         if end:
             end = '\n'
         else:
             end = ''
-        space = self.lenght_bar - self.percent - 1
+        space = self.length_bar - self.percent - 1
+        # TODO: get format from user
         print(
             f'\r epochs {self.epochs}: ' \
             f'[{"="*self.percent}>{" "*space}] {percent:>3d}%  ' \
@@ -32,13 +34,13 @@ class ProgressBar:
         if batch == self.n_samples:
             self._print_result(100, addition_output, True)
             return
-        new_percent = int((batch / self.n_samples) * self.lenght_bar)
-        actual_percent = int((self.percent / self.lenght_bar) * 100)
+        new_percent = int((batch / self.n_samples) * self.length_bar)
+        actual_percent = int((self.percent / self.length_bar) * 100)
         if self.percent < new_percent:
             self.percent = new_percent
         self.take_time += time() - self.last_time
         self.last_time = time()
-        self._print_result(actual_percent, addition_output)
+        self._print_result(actual_percent)
 
 
 class EarlyStopping:
