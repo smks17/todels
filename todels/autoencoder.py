@@ -44,12 +44,13 @@ class VAE(AE):
         return self.decoder(x)
     
     def get_representation(self, var, mean) -> torch.Tensor:
-        epsilon = torch.randn_like(np.exp(0.5 * var))
+        std = torch.exp(var * 0.5)
+        epsilon = torch.randn_like(std)
         return mean + (epsilon * var)
     
     def forward(self, x) -> torch.Tensor:
         mean, var = self.encode(x)
-        return self.decoder(self.get_representation(var, mean))
+        return self.decoder(self.get_representation(var, mean)), mean, var
 
     @staticmethod
     def cal_loss(x, recons_loss, mean, var, kld_weight=0.1):
