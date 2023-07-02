@@ -1,4 +1,4 @@
-from typing import Iterable, Optional, Union
+from typing import Iterable, List, Optional, Union
 
 import torch
 import torch.nn as nn
@@ -70,19 +70,66 @@ class ConvBlock(nn.Module):
     def forward(self, x):
         return self.layer(x)
 
-def _create_fc(num_classes: int,
-               final_activation: str = "Softmax",
-               dropout_rate: float = 0.25,
-               device: Optional[Union[torch.device, str]] = None):
-    if final_activation.capitalize() == "Softmax":
-        activation = nn.Softmax
-    elif final_activation.capitalize() == "Logsoftmax":
-        activation = nn.LogSoftmax
-    else:
-        raise NotImplementedError(f"{activation} is not implemented yet!")
-    fc = nn.Sequential(
-        nn.Dropout(dropout_rate),
-        nn.LazyLinear(num_classes, device=device),
-        activation(dim=1)
-    )
-    return fc
+class MLP(nn.Module):
+    """A fully connected module.
+    Typically is used for fc layer.
+    """
+    def __init__(self,
+                 layers: Iterable[int],
+                 layers_activation_function: Optional[Union[List[str], str]] = "ReLU",
+                 final_activation_function: Optional[str] = "Softmax",
+                 dropout_rate: Optional[int] = None,
+                 device: Optional[Union[torch.device, str]] = None):
+        """
+        Parameters
+        ----------
+        layers: Iterable[int]
+            It is a array that use for information about number of layers
+            and number of perceptrons in each layer (output size). The rows are layers and
+            columns are number of perceptrons in each layer.
+        layers_activation_function: Optional[Union[List[str], str]] = "ReLU"
+            A list of activation functions between each layer. It should be
+            len(layers) - 1. Or could be a single str that show all
+            layers activation function. Or if it passes None, it means won't
+            use any activation function between each layer.
+        final_activation_function: Optional[str] = "Softmax"
+            The last activation function does on output. If it passes None,
+            it means won't use activation on output.
+        dropout_rate: Optional[int] = None
+            The dropout betweens each layer. If it passes None, it means
+            won't doing dropout.
+        device: Optional[Union[torch.device, str]] = None
+            target device which you would run on.
+        """
+        super(self.__class__, self).__init__()
+        self._n_layers = len(layers)
+        if (not layers_activation_function is None
+            and isinstance(layers_activation_function, str)
+        ):
+            layers_activation_function = [layers_activation_function] * (self._n_layers - 1)
+        assert len(layers_activation_function) == self._n_layers - 1, "number of activation must be len(layers) - 1"
+        self.network = nn.Sequential()
+        for i, l in enumerate(layers):
+            self.network.add_module(f"Linear_{i+1}", nn.LazyLinear(l, device=device))
+            if i < (self._n_layers-1):
+                if not dropout_rate is None:
+                    self.network.add_module(f"Dropout_{i+1}", nn.Dropout(dropout_rate, True))
+                if not layers_activation_function is None:
+                    f = layers_activation_function[i]
+                    if f.lower() == "relu":
+                        self.network.add_module(f.upper()+f"{i+1}", nn.ReLU(True))
+                    elif f.lower() == "sigmoid":
+                        self.network.add_module(f.upper()+f"{i+1}", nn.Sigmoid())
+                    else:
+                        raise NotImplementedError(f"{activation} is not implemented yet!")
+        if not final_activation_function is None:
+            if final_activation_function.lower() == "softmax":
+                activation = nn.Softmax
+            elif final_activation_function.lower() == "logsoftmax":
+                activation = nn.LogSoftmax
+            else:
+                raise NotImplementedError(f"{activation} is not implemented yet!")
+            self.network.add_module(final_activation_function.upper(), activation(dim=1))
+
+    def forward(self, x):
+        return self.network(x)

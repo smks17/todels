@@ -8,7 +8,7 @@ from typing import Iterable, Optional, Union
 import torch
 import torch.nn as nn
 
-from todels import ConvBlock, _create_fc
+from todels import ConvBlock, MLP
 from todels.residual import (
     LAYERS_RESIDUAL50,
     LAYERS_RESIDUAL101,
@@ -113,7 +113,9 @@ class _Resnext(nn.Module):
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
         self.flatten = nn.Flatten()        
         # fc (last block)
-        self.fc = _create_fc(num_classes, device=device)
+        self.fc = MLP([num_classes],
+                      final_activation_function="softmax",
+                      device=device)
     
     def forward(self, x):
         out = self.conv1(x)
