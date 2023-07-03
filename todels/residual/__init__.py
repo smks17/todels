@@ -26,11 +26,13 @@ class ResnetShortcut(nn.Module):
                                        type_norm="batch",
                                        activation=activation,
                                        device=device)
+
     def forward(self, x):
         return self.short_way(x)
 
-LAYERS_RESIDUAL18 = [2,2,2,2]
-LAYERS_RESIDUAL34 = [3,4,6,3]
-LAYERS_RESIDUAL50 = [3,4,6,3]
-LAYERS_RESIDUAL101 = [3,4,23,3]
-LAYERS_RESIDUAL152 = [3,8,36,3]
+
+LAYERS_RESIDUAL18 = [2, 2, 2, 2]
+LAYERS_RESIDUAL34 = [3, 4, 6, 3]
+LAYERS_RESIDUAL50 = [3, 4, 6, 3]
+LAYERS_RESIDUAL101 = [3, 4, 23, 3]
+LAYERS_RESIDUAL152 = [3, 8, 36, 3]

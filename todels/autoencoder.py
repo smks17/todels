@@ -2,7 +2,6 @@ from typing import List, Tuple
 
 import torch
 import torch.nn as nn
-import numpy as np
 
 
 class AE(nn.Module):
@@ -29,25 +28,25 @@ class MultiAE(nn.Module):
             outputs.append(decoder(z))
         return outputs
 
-    
+
 class VAE(AE):
     def __init__(self, encoder: nn.Module, decoder: nn.Module, latent_size: int):
         super(VAE, self).__init__(encoder, decoder)
         self.mean_net = nn.LazyLinear(latent_size)
         self.var_net = nn.LazyLinear(latent_size)
 
-    def encode(self, x) -> Tuple[torch.Tensor, torch.Tensor,torch.Tensor]:
+    def encode(self, x) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         z = self.encoder(x)
         return self.mean_net(z), self.var_net(z)
 
     def decode(self, x):
         return self.decoder(x)
-    
+
     def get_representation(self, var, mean) -> torch.Tensor:
         std = torch.exp(var * 0.5)
         epsilon = torch.randn_like(std)
         return mean + (epsilon * var)
-    
+
     def forward(self, x) -> torch.Tensor:
         mean, var = self.encode(x)
         return self.decoder(self.get_representation(var, mean)), mean, var

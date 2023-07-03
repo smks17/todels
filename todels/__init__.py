@@ -13,8 +13,7 @@ class ConvBlock(nn.Module):
                  groups: int = 1,
                  type_norm: Optional[str] = None,
                  activation: Optional[str] = "ReLU",
-                 device: Optional[Union[torch.device, str]] = None
-    ):
+                 device: Optional[Union[torch.device, str]] = None):
         """
         Parameters
         ---------
@@ -29,7 +28,7 @@ class ConvBlock(nn.Module):
         groups: int = 1
             controls the connection input and output
         type_bn: Optional[str] = None,
-            has whiich type of normalization or it it is None it means don't use
+            has which type of normalization or it it is None it means don't use
         activation: Optional[str] = "ReLU"
             if it isn't None then do activation to output
         device: Optional[Union[torch.device, str]] = None
@@ -70,6 +69,7 @@ class ConvBlock(nn.Module):
     def forward(self, x):
         return self.layer(x)
 
+
 class MLP(nn.Module):
     """A fully connected module.
     Typically is used for fc layer.
@@ -79,6 +79,7 @@ class MLP(nn.Module):
                  layers_activation_function: Optional[Union[List[str], str]] = "ReLU",
                  final_activation_function: Optional[str] = "Softmax",
                  dropout_rate: Optional[int] = None,
+                 first_dropout = False,
                  device: Optional[Union[torch.device, str]] = None):
         """
         Parameters
@@ -98,23 +99,28 @@ class MLP(nn.Module):
         dropout_rate: Optional[int] = None
             The dropout betweens each layer. If it passes None, it means
             won't doing dropout.
+        first_dropout: bool = False
+            If it is True then at the first add a dropout before main layers
         device: Optional[Union[torch.device, str]] = None
             target device which you would run on.
         """
         super(self.__class__, self).__init__()
         self._n_layers = len(layers)
-        if (not layers_activation_function is None
+        if (layers_activation_function is not None
             and isinstance(layers_activation_function, str)
         ):
             layers_activation_function = [layers_activation_function] * (self._n_layers - 1)
-        assert len(layers_activation_function) == self._n_layers - 1, "number of activation must be len(layers) - 1"
+        assert len(layers_activation_function) == self._n_layers - 1,  \
+                "number of activation must be len(layers) - 1"
         self.network = nn.Sequential()
+        if first_dropout and dropout_rate is not None:
+            self.network.add_module("dropout_0", nn.Dropout(dropout_rate, True))
         for i, l in enumerate(layers):
             self.network.add_module(f"Linear_{i+1}", nn.LazyLinear(l, device=device))
             if i < (self._n_layers-1):
-                if not dropout_rate is None:
+                if dropout_rate is not None:
                     self.network.add_module(f"Dropout_{i+1}", nn.Dropout(dropout_rate, True))
-                if not layers_activation_function is None:
+                if layers_activation_function is not None:
                     f = layers_activation_function[i]
                     if f.lower() == "relu":
                         self.network.add_module(f.upper()+f"{i+1}", nn.ReLU(True))
@@ -122,7 +128,7 @@ class MLP(nn.Module):
                         self.network.add_module(f.upper()+f"{i+1}", nn.Sigmoid())
                     else:
                         raise NotImplementedError(f"{activation} is not implemented yet!")
-        if not final_activation_function is None:
+        if final_activation_function is not None:
             if final_activation_function.lower() == "softmax":
                 activation = nn.Softmax
             elif final_activation_function.lower() == "logsoftmax":
@@ -130,6 +136,8 @@ class MLP(nn.Module):
             else:
                 raise NotImplementedError(f"{activation} is not implemented yet!")
             self.network.add_module(final_activation_function.upper(), activation(dim=1))
+        self.flatten = nn.Flatten()
 
     def forward(self, x):
+        x = self.flatten(x)
         return self.network(x)

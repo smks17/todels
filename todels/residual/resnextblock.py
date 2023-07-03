@@ -26,7 +26,8 @@ class ResnextBlockA(nn.Module):
             out_channels_convs: Union[Iterable, int]
                 the number of block output channels
             stride: Union[int, Iterable] = 1
-                 the stride value(s) for middle conv (conv with kernel_size 3) and the short way
+                 the stride value(s) for middle conv (conv with kernel_size 3)
+                 and the short way
             C: int
                 Cardinality of block (number of parallel block)
             activation: str = "ReLU"
@@ -86,7 +87,8 @@ class ResnextBlockB(nn.Module):
             out_channels_convs: Union[Iterable, int]
                 the number of block output channels
             stride: Union[int, Iterable] = 1
-                 the stride value(s) for middle conv (conv with kernel_size 3) and the short way
+                 the stride value(s) for middle conv (conv with kernel_size 3)
+                 and the short way
             C: int
                 Cardinality of block (number of parallel block)
             activation: str = "ReLU"
@@ -99,11 +101,11 @@ class ResnextBlockB(nn.Module):
         # TODO: control better d
         d = (out_channels_convs) // C
         self.blocks = BottleneckBlock(out_channels_convs = [C*d, C*d, out_channels_convs*4],
-                                               stride = stride,
-                                               groups = C,
-                                               has_identity = False,
-                                               activation = None,
-                                               device = device)
+                                      stride = stride,
+                                      groups = C,
+                                      has_identity = False,
+                                      activation = None,
+                                      device = device)
         self.bn_group = nn.BatchNorm2d(out_channels_convs*4, device=device)
         # will be checked downsample via stride
         self.short_way = ResnetShortcut(out_channels_convs*4,

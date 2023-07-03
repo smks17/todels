@@ -9,7 +9,7 @@ class ProgressBar:
         self.epochs = epochs
         self.length_bar = length_bar
         self.reset()
-    
+
     def reset(self):
         self.percent = 0
         self.last_time = time()
@@ -60,6 +60,7 @@ class EarlyStopping:
                 return True
         return False
 
+
 class Checkpoint():
     def __init__(self, model, path):
         self.path = path
@@ -72,5 +73,6 @@ class Checkpoint():
 
     def load(self):
         return torch.load(self.path)
+
 
 __all__ = ("ProgressBar", "EarlyStopping", "Checkpoint")

@@ -11,6 +11,6 @@ def test_alexnet():
 
 
 @model_tester
-def test_alexnet():
+def test_lightalexnet():
     model = LigthAlexnet(in_channels=3, num_classes=10)
     summary(model, MODEL_INPUT_SIZE)
