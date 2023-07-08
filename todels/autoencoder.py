@@ -5,6 +5,7 @@ import torch.nn as nn
 
 
 class AE(nn.Module):
+    """vanilla Autoencoder"""
     def __init__(self, encoder: nn.Module, decoder: nn.Module):
         super(AE, self).__init__()
         self.encoder = encoder
@@ -15,7 +16,7 @@ class AE(nn.Module):
 
 
 class MultiAE(nn.Module):
-    """Have one input encoder and one or more output"""
+    """Have one input encoder and one or more output from decoders"""
     def __init__(self, encoder: nn.Module, decoders: List[nn.Module]):
         super(AE, self).__init__()
         self.encoder = encoder
@@ -56,3 +57,21 @@ class VAE(AE):
         kld_loss = torch.mean(-0.5 * torch.sum(1 + var - mean ** 2 - var.exp(), dim = 1), dim = 0)
         loss = recons_loss + kld_weight * kld_loss
         return loss
+
+
+class CAE(AE):
+    def __init__(self, encoder: nn.Module, decoder: nn.Module):
+        super(CAE, self).__init__(encoder, decoder)
+        self.sigmoid = nn.Sigmoid()
+        
+    def forward(self, x):
+        z = self.sigmoid(self.encoder(x))
+        out = self.decoder(z)
+        return out, z
+
+    @staticmethod
+    def cal_loss(z, abs_loss, encoder_weight, contract_weight=0.01):
+        dh = z * (1 - z)
+        contractive = torch.sum(dh ** 2 * torch.sum(encoder_weight[0] ** 2), axis=1)
+        return abs_loss + contract_weight * contractive
+
