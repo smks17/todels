@@ -1,9 +1,14 @@
 # Todels
 
-A package that implement some famous models and utils in pytorch
+A package that implements some famouse models and tools in Python for learning purpose.
 
 # TODO
-- [ ] Write a notebook to learn CIFAR with residual models   
+- [x] Write a notebook to learn CIFAR with residual models
+- [ ] add weight as parameter in models
+- [ ] Set name for layers of each module 
 - [ ] Varsions of Inception Models
-- [ ] Types of AE
+- [x] Types of AE
 - [ ] Should I have more unittest for each module? 
+- [ ] MobileNet
+- [ ] Markov Chain & Hopfield
+
