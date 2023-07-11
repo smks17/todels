@@ -4,6 +4,10 @@ import torch
 import torch.nn as nn
 
 
+import warnings
+warnings.filterwarnings('ignore', module='torch.nn.modules.lazy')
+
+
 class ConvBlock(nn.Module):
     def __init__(self,
                  out_channel: int,
