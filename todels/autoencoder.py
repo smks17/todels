@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import List, Tuple, Iterable
+from typing import List, Optional, Tuple, Iterable
 
 import torch
 import torch.nn as nn
@@ -10,10 +10,16 @@ class AE(nn.Module):
     """vanilla Autoencoder"""
     def __init__(self,
                  encoder: nn.Module,
-                 decoder: nn.Module | Iterable[nn.Module]):
+                 decoder: nn.Module | Iterable[nn.Module],
+                 device: Optional[torch.device | str] = None):
         super(AE, self).__init__()
-        self.encoder = encoder
-        self.decoder = decoder
+        self.encoder = encoder.to(device)
+        if isinstance(decoder, Iterable):
+            self.decoder = []
+            for d in decoder:
+                self.decoder.append(d.to(device))
+        else:
+            self.decoder = decoder.to(device)
 
     def encode(self, x):
         return self.encoder(x)
@@ -35,19 +41,20 @@ class VAE(AE):
     def __init__(self,
                  encoder: nn.Module,
                  decoder: nn.Module | Iterable[nn.Module],
-                 latent_size: int):
-        super(VAE, self).__init__(encoder, decoder)
-        if isinstance(self.decoder, Iterable):
+                 latent_size: List | int,
+                 device: Optional[torch.device | str] = None):
+        super(VAE, self).__init__(encoder, decoder, device=device)
+        if isinstance(latent_size, Iterable):
             mean_net = []
             var_net = []
-            for i in range(len(self.decoder)):
-                mean_net.append(nn.LazyLinear(latent_size))
-                var_net.append(nn.LazyLinear(latent_size))
+            for i in range(len(latent_size)):
+                mean_net.append(nn.LazyLinear(latent_size[i], device=device))
+                var_net.append(nn.LazyLinear(latent_size[i], device=device))
             self.mean_net = mean_net
             self.var_net = var_net
         else:
-            self.mean_net = nn.LazyLinear(latent_size)
-            self.var_net = nn.LazyLinear(latent_size)
+            self.mean_net = nn.LazyLinear(latent_size, device=device)
+            self.var_net = nn.LazyLinear(latent_size, device=device)
 
     def encode(self, x) -> Tuple[torch.Tensor, torch.Tensor | list[torch.Tensor], torch.Tensor | list[torch.Tensor]]:
         z = self.encoder(x)
@@ -86,7 +93,7 @@ class VAE(AE):
 
     def forward(self, x) -> torch.Tensor:
         z, mean, var = self.encode(x)
-        if isinstance(self.decoder, Iterable):
+        if isinstance(mean, Iterable):
             rz = self.get_representation(var, mean)
             outputs = []
             for i in range(len(rz)):
@@ -96,7 +103,7 @@ class VAE(AE):
             return self.decode(self.get_representation(mean, var)), mean, var
 
     @staticmethod
-    def cal_loss(x, recons_loss, mean, var, kld_weight=0.1):
+    def cal_loss(recons_loss, mean, var, kld_weight=0.1):
         kld_loss = torch.mean(-0.5 * torch.sum(1 + var - mean ** 2 - var.exp(), dim = 1), dim = 0)
         loss = recons_loss + kld_weight * kld_loss
         return loss
@@ -105,8 +112,9 @@ class VAE(AE):
 class CAE(AE):
     def __init__(self,
                  encoder: nn.Module,
-                 decoder: nn.Module | Iterable[nn.Module]):
-        super(CAE, self).__init__(encoder, decoder)
+                 decoder: nn.Module | Iterable[nn.Module],
+                 device: Optional[torch.device | str] = None):
+        super(CAE, self).__init__(encoder, decoder, device)
         self.sigmoid = nn.Sigmoid()
         
     def forward(self, x):
