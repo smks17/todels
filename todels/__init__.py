@@ -63,12 +63,12 @@ class ConvBlock(nn.Module):
             else:
                 raise NotImplementedError(f"normalize {type_norm} is not implemented yet!")
 
-            # TODO: better handle
-            if activation is not None:
-                if activation.capitalize() == "Relu":
-                    self.layer.add_module("ReLU", nn.ReLU(True))
-                else:
-                    raise NotImplementedError(f"activation {activation} is not implemented yet!")
+        # TODO: better handle
+        if activation is not None:
+            if activation.lower() == "relu":
+                self.layer.add_module("ReLU", nn.ReLU(True))
+            else:
+                raise NotImplementedError(f"activation {activation} is not implemented yet!")
 
     def forward(self, x):
         return self.layer(x)
